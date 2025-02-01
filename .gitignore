@@ -1,0 +1,14 @@
+# Ignore .env file
+.env
+
+# Ignore build output
+/bin
+/target
+
+# Ignore dependency directories (for example, if using Go modules)
+vendor/
+
+# Ignore log files
+*.log
+
+.idea/
