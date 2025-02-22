@@ -11,7 +11,7 @@ type URLs struct {
   ShortKey  string    `bson:"short_key"`
   LongURL   string    `bson:"long_url"`
   CreatedAt time.Time `bson:"created_at"`
-  UpdatedAt time.Time `bson:"updated_at"`
+  ExpiredAt time.Time `bson:"expired_at"`
 }
 
 func (l URLs) IndexModels() []mongo.IndexModel {

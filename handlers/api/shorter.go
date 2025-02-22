@@ -5,6 +5,7 @@ import (
   "net/http"
   "url-shortener/internal/services"
   "url-shortener/models"
+  "url-shortener/utils"
 )
 
 type ShorterHandler struct {
@@ -23,12 +24,12 @@ func (s ShorterHandler) ShortenURL(c echo.Context) error {
     return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid input"})
   }
 
-  shortKey, err := s.shorterHandler.ShortenURL(c.Request().Context(), reqLongURL.LongURL)
+  shortKey, err := s.shorterHandler.ShortenURL(c.Request().Context(), reqLongURL.LongURL, utils.TimeExpireURL)
   if err != nil {
     return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save URL"})
   }
 
-  return c.JSON(http.StatusOK, map[string]string{"short_url": "http://localhost:8080/api/v1/" + shortKey})
+  return c.JSON(http.StatusOK, map[string]string{"short_url": "http://localhost:3001/api/v1/" + shortKey})
 }
 
 func (s ShorterHandler) RedirectURL(c echo.Context) error {

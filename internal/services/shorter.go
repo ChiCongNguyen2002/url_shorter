@@ -14,7 +14,7 @@ type ShorterService struct {
 }
 
 type IShortenerService interface {
-  ShortenURL(c context.Context, longURL string) (string, error)
+  ShortenURL(c context.Context, longURL string, expiredAt time.Duration) (string, error)
   RedirectURL(c context.Context, shortKey string) (string, error)
 }
 
@@ -25,14 +25,14 @@ func NewShorterService(repo shorter.IShorterRepository, cache redis.ICache) *Sho
   }
 }
 
-func (s ShorterService) ShortenURL(c context.Context, longURL string) (string, error) {
+func (s ShorterService) ShortenURL(c context.Context, longURL string, expiredAt time.Duration) (string, error) {
   // Generate unique short key
   var shortener utils.Shortener = utils.Base62Shortener{} // or utils.MD5Shortener{}
   // var shortener utils.Shortener = utils.MD5Shortener{}
   shortKey := shortener.GenerateKey(longURL)
 
   // Save to repositories
-  if err := s.shorterRepo.SaveURL(c, shortKey, longURL); err != nil {
+  if err := s.shorterRepo.SaveURL(c, shortKey, longURL, expiredAt); err != nil {
     return "Failed to save URL", err
   }
 
