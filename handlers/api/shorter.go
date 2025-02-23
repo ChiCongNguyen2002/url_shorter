@@ -26,7 +26,7 @@ func (s ShorterHandler) ShortenURL(c echo.Context) error {
 
   shortKey, err := s.shorterHandler.ShortenURL(c.Request().Context(), reqLongURL.LongURL, utils.TimeExpireURL)
   if err != nil {
-    return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save URL"})
+    return c.JSON(http.StatusInternalServerError, map[string]string{"error": shortKey})
   }
 
   return c.JSON(http.StatusOK, map[string]string{"short_url": "http://localhost:3001/api/v1/" + shortKey})
@@ -39,7 +39,7 @@ func (s ShorterHandler) RedirectURL(c echo.Context) error {
   }
   longURL, err := s.shorterHandler.RedirectURL(c.Request().Context(), shortKey)
   if err != nil {
-    return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save URL"})
+    return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
   }
   return c.Redirect(http.StatusMovedPermanently, longURL)
 }

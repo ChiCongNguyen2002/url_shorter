@@ -2,6 +2,7 @@ package services
 
 import (
   "context"
+  "fmt"
   "time"
   "url-shortener/database/redis"
   "url-shortener/repositories/shorter"
@@ -31,15 +32,21 @@ func (s ShorterService) ShortenURL(c context.Context, longURL string, expiredAt 
   // var shortener utils.Shortener = utils.MD5Shortener{}
   shortKey := shortener.GenerateKey(longURL)
 
+  // Check URL exist
+  existingURL, err := s.cache.Get(c, shortKey)
+  if err == nil && existingURL != "" {
+    fmt.Printf("🔄 URL already shortened: %s -> %s", longURL, shortKey)
+    return shortKey, nil
+  }
+
   // Save to repositories
   if err := s.shorterRepo.SaveURL(c, shortKey, longURL, expiredAt); err != nil {
     return "Failed to save URL", err
   }
 
   // Save to redis
-  err := s.cache.Set(c, shortKey, longURL, 24*time.Hour)
-  if err != nil {
-    return "", err
+  if err := s.cache.Set(c, shortKey, longURL, expiredAt); err != nil {
+    fmt.Printf("Warning: Failed to cache URL %s: %v", shortKey, err)
   }
 
   return shortKey, nil
@@ -49,17 +56,21 @@ func (s ShorterService) RedirectURL(c context.Context, shortKey string) (string,
   // Check redis first
   longURL, err := s.cache.Get(c, shortKey)
   if err == nil && longURL != "" {
-    return longURL, nil
+    return longURL, err
   }
 
   // Fetch from repository if not found in redis
   urlObj, err := s.shorterRepo.GetURL(c, shortKey)
   if err != nil {
-    return "URL not found", nil
+    return "URL not found", err
   }
 
   // Update redis asynchronously (log warning if fails)
-  _ = s.cache.Set(c, shortKey, longURL, 24*time.Hour)
+  go func() {
+    if cacheErr := s.cache.Set(c, shortKey, urlObj.LongURL, 24*time.Hour); cacheErr != nil {
+      fmt.Printf("⚠️ Warning: Failed to cache URL %s: %v", shortKey, cacheErr)
+    }
+  }()
 
   return urlObj.LongURL, nil
 }

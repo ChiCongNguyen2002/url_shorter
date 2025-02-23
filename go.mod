@@ -9,6 +9,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/rs/zerolog v1.33.0
+	github.com/streadway/amqp v1.1.0
 	go.mongodb.org/mongo-driver v1.17.2
 )
 

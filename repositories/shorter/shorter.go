@@ -2,6 +2,8 @@ package shorter
 
 import (
   "context"
+  "errors"
+  "fmt"
   "go.mongodb.org/mongo-driver/bson"
   "go.mongodb.org/mongo-driver/mongo"
   "go.mongodb.org/mongo-driver/mongo/options"
@@ -77,13 +79,17 @@ func (r *shorterRepository) SaveURL(ctx context.Context, shortKey, longURL strin
 // GetURL retrieves the long URL corresponding to the short key, checking expiration
 func (r *shorterRepository) GetURL(ctx context.Context, shortKey string) (*URLs, error) {
   var result URLs
-  err := r.Collection.FindOne(ctx, bson.M{
-    "short_key":  shortKey,
-    "expired_at": bson.M{"$gt": time.Now()},
-  }).Decode(&result)
-
+  err := r.Collection.FindOne(ctx, bson.M{"short_key": shortKey}).Decode(&result)
   if err != nil {
+    if errors.Is(err, mongo.ErrNoDocuments) {
+      return nil, fmt.Errorf("URL not exist")
+    }
     return nil, err
+  }
+
+  // Check URL expiredAt
+  if result.ExpiredAt.Before(time.Now()) {
+    return nil, fmt.Errorf("URL has expired")
   }
 
   return &result, nil
